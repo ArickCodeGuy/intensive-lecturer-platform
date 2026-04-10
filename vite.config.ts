@@ -1,41 +1,17 @@
-import { defineConfig, type Plugin } from 'vite';
+import { defineConfig } from 'vite';
 
-/**
- * Сборка открывается с диска (file://). У Vite по умолчанию:
- * — полифилл modulepreload дергает fetch(), с file:// это ломается;
- * — атрибут crossorigin у script/link мешает загрузке модулей с file://.
- */
-function stripCrossoriginForFileOpen(): Plugin {
-  return {
-    name: 'strip-crossorigin-file',
-    apply: 'build',
-    transformIndexHtml: {
-      order: 'post',
-      handler(html: string) {
-        return html
-          .replace(/\s+crossorigin(?:="[^"]*"|='[^']*'|)?/gi, '')
-          .replace(/<script type="module"/g, '<script defer');
-      },
-    },
-  };
-}
-
-export default defineConfig({
-  base: './',
-  plugins: [stripCrossoriginForFileOpen()],
-  build: {
-    target: 'es2018',
-    cssCodeSplit: false,
-    modulePreload: {
-      polyfill: false,
-    },
-    rollupOptions: {
-      output: {
-        format: 'iife',
-        entryFileNames: 'assets/site.js',
-        chunkFileNames: 'assets/site.js',
-        assetFileNames: 'assets/[name][extname]',
-      },
-    },
+// base '/' для dev — иначе Vite на localhost часто отдаёт мусор/404.
+// base './' только в build — для share-package (file:// и любой каталог).
+export default defineConfig(({ command }) => ({
+  base: command === 'build' ? './' : '/',
+  server: {
+    host: true,
+    port: 5173,
+    strictPort: false,
   },
-});
+  preview: {
+    host: true,
+    port: 4173,
+    strictPort: false,
+  },
+}));

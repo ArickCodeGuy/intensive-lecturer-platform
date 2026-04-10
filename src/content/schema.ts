@@ -22,6 +22,12 @@ export interface TopicInterviewQuestion {
   expectedAnswer: string;
 }
 
+/** Краткие расшифровки терминов (англ. аббревиатуры, имена продуктов) для лектора. */
+export interface TopicGlossaryEntry {
+  term: string;
+  meaning: string;
+}
+
 export interface TopicPracticeHint {
   task: string;
   timeboxMinutes: number;
@@ -44,6 +50,7 @@ export interface TopicContent {
   codeExample: TopicCodeExample;
   usefulLinks: TopicResourceLink[];
   estimatedMinutes: number;
+  glossary?: TopicGlossaryEntry[];
 }
 
 export interface LectureModule {

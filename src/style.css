@@ -53,6 +53,37 @@ p {
   gap: 12px;
 }
 
+.module-grid--interview {
+  grid-template-columns: minmax(280px, 520px);
+}
+
+.interview-landing-block {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #d9e2f1;
+}
+
+.interview-landing-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #5d74a0;
+  margin-bottom: 6px;
+}
+
+.interview-landing-intro {
+  color: #4f6284;
+  font-size: 14px;
+  margin-bottom: 12px;
+  max-width: 640px;
+}
+
+.module-card.module-card--interview {
+  border-color: #9eb7e8;
+  background: linear-gradient(160deg, #ffffff 0%, #f2f6ff 100%);
+}
+
 .module-card {
   border: 1px solid #cfd9eb;
   border-radius: 14px;
@@ -181,6 +212,14 @@ p {
   margin-bottom: 16px;
 }
 
+.content-header-hint {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #5d6d8c;
+  line-height: 1.45;
+  max-width: 52rem;
+}
+
 .tabs {
   display: flex;
   flex-wrap: wrap;
@@ -222,6 +261,125 @@ p {
 .topic-section-title {
   font-size: 22px;
   color: #213a66;
+}
+
+.topic-section--interview-prompt .topic-section-title {
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #4a6494;
+}
+
+.content-card--interview-prompt {
+  border: 1px solid #b8c9eb;
+  border-radius: 12px;
+  padding: 16px 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #f5f8ff 100%);
+  box-shadow: 0 2px 12px rgba(36, 66, 124, 0.06);
+}
+
+.interview-prompt-lead {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: #4f6284;
+  line-height: 1.5;
+}
+
+.interview-prompt-list {
+  margin: 0;
+  padding-left: 1.35rem;
+  display: grid;
+  gap: 14px;
+  line-height: 1.5;
+}
+
+.interview-prompt-item {
+  font-size: 16px;
+  color: #1a2a44;
+  font-weight: 600;
+}
+
+@media (min-width: 960px) {
+  .content-card--interview-prompt {
+    position: sticky;
+    top: 10px;
+    z-index: 1;
+  }
+}
+
+.topic-section--glossary .topic-section-title {
+  font-size: 17px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #4a6494;
+}
+
+.topic-section-title--glossary-main {
+  font-size: 20px !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  color: #0d3d2e !important;
+}
+
+.topic-section--glossary-first {
+  padding-bottom: 4px;
+}
+
+.content-card--glossary {
+  border: 1px solid #dce8f0;
+  border-radius: 12px;
+  padding: 14px 18px 16px;
+  background: linear-gradient(180deg, #fafcfd 0%, #f4f9fb 100%);
+}
+
+.content-card--glossary-prominent {
+  border: 2px solid #1a6b54;
+  border-radius: 14px;
+  padding: 18px 20px 20px;
+  background: linear-gradient(165deg, #f0fff8 0%, #e8f5ef 55%, #dff5ea 100%);
+  box-shadow: 0 4px 18px rgba(26, 107, 84, 0.12);
+}
+
+.content-card--glossary-prominent .glossary-term {
+  color: #0a2f24;
+}
+
+.content-card--glossary-prominent .glossary-meaning {
+  border-left-color: #1a6b54;
+}
+
+.glossary-lead {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: #5a6b82;
+  line-height: 1.5;
+}
+
+.glossary-list {
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.glossary-term {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a3550;
+  letter-spacing: 0.02em;
+}
+
+.glossary-term::after {
+  content: '';
+}
+
+.glossary-meaning {
+  margin: 4px 0 0;
+  padding: 0 0 0 12px;
+  border-left: 3px solid #9ec5d8;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #2d4158;
 }
 
 .bullet-list {

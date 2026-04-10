@@ -1,4 +1,5 @@
 import { module1 } from './module-1';
+import { moduleInterviewMs } from './module-interview-ms';
 import type { LectureModule } from './schema';
 
 const module2: LectureModule = {
@@ -48,4 +49,11 @@ const module5: LectureModule = {
 module1.isAvailable = true;
 module1.summary = 'Core Java: JVM, память, ООП, модификаторы, String, equals/hashCode и базовые собес-вопросы.';
 
-export const modules: LectureModule[] = [module1, module2, module3, module4, module5];
+export const modules: LectureModule[] = [
+  module1,
+  module2,
+  module3,
+  module4,
+  module5,
+  moduleInterviewMs,
+];

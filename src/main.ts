@@ -18,27 +18,67 @@ function getCurrentTopic(): TopicContent {
   return modules[state.activeModuleIndex].topics[state.activeTopicIndex];
 }
 
+const INTERVIEW_MODULE_ID = 'interview-ms';
+
 function renderModuleLanding(): string {
-  const cards = modules
-    .map((moduleItem, index) => {
+  const interviewIndex = modules.findIndex((m) => m.id === INTERVIEW_MODULE_ID);
+  const interviewModule = interviewIndex >= 0 ? modules[interviewIndex] : undefined;
+  const coreModules = modules.filter((m) => m.id !== INTERVIEW_MODULE_ID);
+
+  const cards = coreModules
+    .map((moduleItem, displayIndex) => {
+      const index = modules.indexOf(moduleItem);
       const isAvailable = moduleItem.isAvailable !== false;
       const cardClass = isAvailable ? 'module-card' : 'module-card locked';
       const actionAttr = isAvailable ? 'data-action="open-module"' : '';
       const lockText = !isAvailable && moduleItem.lockedReason ? `<p class="module-lock">${moduleItem.lockedReason}</p>` : '';
       return `<button class="${cardClass}" ${actionAttr} data-module-index="${index}">
-        <p class="module-kicker">Модуль ${index + 1}</p>
+        <p class="module-kicker">Модуль ${displayIndex + 1}</p>
         <h2>${moduleItem.title}</h2>
         <p class="module-description">${moduleItem.summary ?? `Тем: ${moduleItem.topics.length}.`}</p>
         ${lockText}
       </button>`;
     })
     .join('');
+
+  if (!interviewModule || interviewIndex < 0) {
+    return `<section class="module-landing">
+    <div class="module-hero">
+      <h1>Java Intensive Studio</h1>
+      <p>Материалы интенсивов по модулям.</p>
+    </div>
+    <div class="module-grid">${cards}</div>
+  </section>`;
+  }
+
+  const interviewAvailable = interviewModule?.isAvailable !== false;
+  const interviewCardClass = interviewAvailable ? 'module-card module-card--interview' : 'module-card locked';
+  const interviewAction = interviewAvailable ? 'data-action="open-module"' : '';
+  const interviewLock =
+    !interviewAvailable && interviewModule?.lockedReason
+      ? `<p class="module-lock">${interviewModule.lockedReason}</p>`
+      : '';
+
+  const interviewBlock = `<div class="interview-landing-block">
+    <h2 class="interview-landing-title">Интервью</h2>
+    <p class="interview-landing-intro">Те же вкладки и структура, что у тем модулей: кратко, вопрос — ответ, схемы.</p>
+    <div class="module-grid module-grid--interview">
+      <button type="button" class="${interviewCardClass}" ${interviewAction} data-module-index="${interviewIndex}">
+        <p class="module-kicker">Микросервисы и эксплуатация</p>
+        <h2>${interviewModule.title}</h2>
+        <p class="module-description">${interviewModule.summary ?? `Тем: ${interviewModule.topics.length}.`}</p>
+        ${interviewLock}
+      </button>
+    </div>
+  </div>`;
+
   return `<section class="module-landing">
     <div class="module-hero">
       <h1>Java Intensive Studio</h1>
       <p>Материалы интенсивов по модулям.</p>
     </div>
     <div class="module-grid">${cards}</div>
+    ${interviewBlock}
   </section>`;
 }
 
@@ -113,6 +153,22 @@ function highlightTerms(text: string): string {
     'stack',
     'metaspace',
     'classpath',
+    'Kafka',
+    'REST',
+    'DDD',
+    'mTLS',
+    'JWT',
+    'OAuth2',
+    'OpenShift',
+    'Kubernetes',
+    'Istio',
+    'Redis',
+    'Prometheus',
+    'Grafana',
+    'Circuit Breaker',
+    'API Gateway',
+    'happens-before',
+    'volatile',
   ];
   return terms
     .sort((left, right) => right.length - left.length)
@@ -273,7 +329,67 @@ function renderTopicPage(topic: TopicContent): string {
     ? `<h3>Пояснение к коду</h3>
         <ul class="bullet-list">${walkthrough}</ul>`
     : '';
+
+  const isInterviewPack = topic.id.startsWith('int-ms-');
+  const hasGlossary = Boolean(topic.glossary && topic.glossary.length > 0);
+  const glossaryDl =
+    hasGlossary && topic.glossary
+      ? `<dl class="glossary-list">
+          ${topic.glossary
+            .map(
+              (entry) =>
+                `<dt class="glossary-term">${highlightTerms(entry.term)}</dt><dd class="glossary-meaning">${highlightTerms(entry.meaning)}</dd>`,
+            )
+            .join('')}
+        </dl>`
+      : '';
+  const glossaryLead =
+    '<p class="glossary-lead">Кратко, что значат имена и аббревиатуры в этой теме — чтобы не гуглить посреди беседы.</p>';
+  const glossarySectionClasses =
+    isInterviewPack && hasGlossary
+      ? 'topic-section topic-section--glossary topic-section--glossary-first'
+      : 'topic-section topic-section--glossary';
+  const glossaryCardClasses =
+    isInterviewPack && hasGlossary
+      ? 'content-card content-card--glossary content-card--glossary-prominent'
+      : 'content-card content-card--glossary';
+
+  const interviewPromptLead =
+    isInterviewPack && hasGlossary
+      ? 'Термины — в зелёном блоке «Словарь терминов» сразу над этой карточкой. Здесь только вопросы; полный разбор и шпаргалка — ещё ниже.'
+      : 'Задавайте по очереди — ответы ниже в разделе «Вопросы с короткими ответами».';
+
+  const interviewPromptSection =
+    isInterviewPack && topic.interviewFocus.length > 0
+      ? `<section class="topic-section topic-section--interview-prompt">
+      <h3 class="topic-section-title">Вопросы для интервью</h3>
+      <div class="content-card content-card--interview-prompt">
+        <p class="interview-prompt-lead">${interviewPromptLead}</p>
+        <ol class="interview-prompt-list">
+          ${topic.interviewFocus
+            .map(
+              (item) =>
+                `<li class="interview-prompt-item">${highlightTerms(item.question)}</li>`,
+            )
+            .join('')}
+        </ol>
+      </div>
+    </section>`
+      : '';
+
+  const glossarySection = hasGlossary
+    ? `<section class="${glossarySectionClasses}">
+      <h3 class="topic-section-title topic-section-title--glossary-main">Словарь терминов</h3>
+      <div class="${glossaryCardClasses}">
+        ${glossaryLead}
+        ${glossaryDl}
+      </div>
+    </section>`
+    : '';
+
   return `<article class="topic-page">
+    ${glossarySection}
+    ${interviewPromptSection}
     <section class="topic-section">
       <h3 class="topic-section-title">Полный разбор</h3>
       <div class="content-card">
@@ -321,6 +437,15 @@ function render(): void {
       <main class="content">
         <header class="content-header">
           <h2>${topic.title}</h2>
+          ${
+            topic.id.startsWith('int-ms-')
+              ? `<p class="content-header-hint">${
+                  topic.glossary && topic.glossary.length > 0
+                    ? 'Первый блок под заголовком темы — <strong>Словарь терминов</strong> (расшифровки из вопроса). Ниже — вопросы для беседы (карточка может «прилипать» при прокрутке).'
+                    : 'Текст вопросов дублируется вверху страницы — удобно держать на экране во время беседы.'
+                }</p>`
+              : ''
+          }
         </header>
         <section class="tab-content">${renderTopicPage(topic)}</section>
       </main>

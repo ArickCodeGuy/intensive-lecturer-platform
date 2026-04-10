@@ -16,6 +16,14 @@ type LegacyTopicInput = {
   lecturerNotes?: string[];
   estimatedMinutes: number;
   priority?: Topic['priority'];
+  /** Доп. пункты к автогенерации из buildKnowledgeBoost (например, модуль «Интервью»). */
+  extraKeyPoints?: string[];
+  /** Свои ссылки вместо buildUsefulLinks по заголовку. */
+  usefulLinksOverride?: Topic['usefulLinks'];
+  /** Явное «простое определение» вместо словаря simpleDefinitionsByTopicId. */
+  simpleDefinitionOverride?: string;
+  /** Расшифровки терминов для страницы темы (например модуль «Интервью»). */
+  glossary?: Topic['glossary'];
 };
 
 function buildUsefulLinks(title: string): Topic['usefulLinks'] {
@@ -439,16 +447,14 @@ const simpleDefinitionsByTopicId: Record<string, string> = {
     'StringBuilder и StringBuffer позволяют эффективно собирать строку по частям без создания лишних промежуточных объектов.',
 };
 
-function topic(input: LegacyTopicInput): Topic {
+export function topic(input: LegacyTopicInput): Topic {
   const knowledge = buildKnowledgeBoost(input.title);
   const commonMistakes = uniqueLines(
     [input.codeExample.commonPitfall, ...knowledge.mistakes].filter((line) => line.trim().length > 0),
   );
   const finalCommonMistakes = uniqueLines(commonMistakes);
 
-  const keyPoints = uniqueLines([
-    ...knowledge.keyPoints,
-  ]);
+  const keyPoints = uniqueLines([...knowledge.keyPoints, ...(input.extraKeyPoints ?? [])]);
 
   const clarifiedQuickAnswer = clarifyTerminology(input.quickAnswer);
   const clarifiedExplainBrief = input.explainBrief.map((item) => clarifyTerminology(item));
@@ -466,8 +472,19 @@ function topic(input: LegacyTopicInput): Topic {
     ...knowledge.traps,
   ]);
 
-  const simpleDefinitionRaw = simpleDefinitionsByTopicId[input.id] ?? `${input.title} — ${input.explainBrief[0] ?? input.quickAnswer}`;
+  const simpleDefinitionRaw =
+    input.simpleDefinitionOverride ??
+    simpleDefinitionsByTopicId[input.id] ??
+    `${input.title} — ${input.explainBrief[0] ?? input.quickAnswer}`;
   const simpleDefinition = clarifyTerminology(simpleDefinitionRaw);
+
+  const glossary =
+    input.glossary && input.glossary.length > 0
+      ? input.glossary.map((entry) => ({
+          term: clarifyTerminology(entry.term),
+          meaning: clarifyTerminology(entry.meaning),
+        }))
+      : undefined;
 
   return {
     id: input.id,
@@ -482,8 +499,9 @@ function topic(input: LegacyTopicInput): Topic {
     interviewFocus: clarifiedInterviewFocus,
     interviewTraps,
     codeExample: input.codeExample,
-    usefulLinks: buildUsefulLinks(input.title),
+    usefulLinks: input.usefulLinksOverride ?? buildUsefulLinks(input.title),
     estimatedMinutes: input.estimatedMinutes,
+    glossary,
   };
 }
 
