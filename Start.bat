@@ -1,37 +1,39 @@
 @echo off
-chcp 65001 >nul
+REM File must stay ASCII-only: cmd.exe breaks UTF-8 .bat on many PCs (garbled lines = fake "commands").
 cd /d "%~dp0"
-title Java Intensive — запуск
+title Java Intensive
+
 echo.
-echo === Материалы по Java (интенсив) ===
+echo === Java Intensive materials ===
 echo.
 
 where node >nul 2>&1
 if errorlevel 1 (
-  echo [Ошибка] Не установлен Node.js.
+  echo [ERROR] Node.js is not installed or not in PATH.
   echo.
-  echo 1. Откройте сайт https://nodejs.org/
-  echo 2. Скачайте версию LTS и установите ^(галочки по умолчанию можно оставить^)
-  echo 3. Закройте это окно и снова дважды щёлкните Start.bat
+  echo 1. Open https://nodejs.org/ and install LTS
+  echo 2. Reboot PC or reopen this folder after install
+  echo 3. Run Start.bat again
   echo.
   pause
   exit /b 1
 )
 
 if not exist "node_modules\" (
-  echo Первый раз ставим зависимости — может занять минуту...
+  echo First run: installing dependencies ^(may take a minute^)...
   call npm install
   if errorlevel 1 (
     echo.
-    echo [Ошибка] npm install не удался. Проверьте интернет и попробуйте снова.
+    echo [ERROR] npm install failed. Check internet and try again.
     pause
     exit /b 1
   )
   echo.
 )
 
-echo Запускаем страницу. Это окно НЕ закрывайте — пока оно открыто, сайт работает.
-echo Остановить сервер: в этом окне нажмите Ctrl+C, потом любую клавишу.
+echo Starting dev server. Keep this window open.
+echo Open: http://localhost:5173/
+echo Stop: press Ctrl+C here.
 echo.
 call npm run dev
 echo.
