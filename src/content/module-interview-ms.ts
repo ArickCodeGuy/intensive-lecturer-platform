@@ -21,12 +21,13 @@ const MS_LINKS = [
 
 export const moduleInterviewMs: LectureModule = {
   id: 'interview-ms',
+  interviewSectionKicker: 'Микросервисы и эксплуатация',
   title: 'Интервью: микросервисы и эксплуатация',
   targetDurationMinutes: 120,
   audienceLevel: 'Стажёр',
   isAvailable: true,
   summary:
-    'Двадцать тем без «каши»: сначала смысл простыми словами, потом термины и что ответить на собеседовании.',
+    'Двадцать тем: в каждой — простое объяснение сути, ключевые термины и ориентиры для ответа на собеседовании.',
   topics: [
     topic({
       id: 'int-ms-01',

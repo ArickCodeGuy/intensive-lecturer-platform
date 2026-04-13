@@ -1,5 +1,6 @@
 import { module1 } from './module-1';
 import { moduleInterviewMs } from './module-interview-ms';
+import { moduleInterviewStack } from './module-interview-stack';
 import type { LectureModule } from './schema';
 
 const module2: LectureModule = {
@@ -56,4 +57,5 @@ export const modules: LectureModule[] = [
   module4,
   module5,
   moduleInterviewMs,
+  moduleInterviewStack,
 ];

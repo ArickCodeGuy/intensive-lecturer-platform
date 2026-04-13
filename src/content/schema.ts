@@ -65,4 +65,6 @@ export interface LectureModule {
   progressTotal?: number;
   lockedReason?: string;
   summary?: string;
+  /** Подзаголовок на карточке в блоке «Интервью» на главной (только для модулей с id `interview-*`). */
+  interviewSectionKicker?: string;
 }

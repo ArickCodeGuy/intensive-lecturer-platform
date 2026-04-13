@@ -18,12 +18,15 @@ function getCurrentTopic(): TopicContent {
   return modules[state.activeModuleIndex].topics[state.activeTopicIndex];
 }
 
-const INTERVIEW_MODULE_ID = 'interview-ms';
+function isInterviewLandingModule(moduleItem: (typeof modules)[number]): boolean {
+  return moduleItem.id.startsWith('interview-');
+}
 
 function renderModuleLanding(): string {
-  const interviewIndex = modules.findIndex((m) => m.id === INTERVIEW_MODULE_ID);
-  const interviewModule = interviewIndex >= 0 ? modules[interviewIndex] : undefined;
-  const coreModules = modules.filter((m) => m.id !== INTERVIEW_MODULE_ID);
+  const interviewSlots = modules
+    .map((moduleItem, index) => ({ moduleItem, index }))
+    .filter(({ moduleItem }) => isInterviewLandingModule(moduleItem));
+  const coreModules = modules.filter((m) => !isInterviewLandingModule(m));
 
   const cards = coreModules
     .map((moduleItem, displayIndex) => {
@@ -32,51 +35,67 @@ function renderModuleLanding(): string {
       const cardClass = isAvailable ? 'module-card' : 'module-card locked';
       const actionAttr = isAvailable ? 'data-action="open-module"' : '';
       const lockText = !isAvailable && moduleItem.lockedReason ? `<p class="module-lock">${moduleItem.lockedReason}</p>` : '';
-      return `<button class="${cardClass}" ${actionAttr} data-module-index="${index}">
+      const topicMeta =
+        moduleItem.topics.length > 0
+          ? `<p class="module-meta"><span class="module-meta-dot" aria-hidden="true"></span>Тем: ${moduleItem.topics.length}</p>`
+          : '';
+      return `<button class="${cardClass}" ${actionAttr} data-module-index="${index}" data-module-id="${moduleItem.id}">
         <p class="module-kicker">Модуль ${displayIndex + 1}</p>
         <h2>${moduleItem.title}</h2>
         <p class="module-description">${moduleItem.summary ?? `Тем: ${moduleItem.topics.length}.`}</p>
+        ${topicMeta}
         ${lockText}
       </button>`;
     })
     .join('');
 
-  if (!interviewModule || interviewIndex < 0) {
+  if (interviewSlots.length === 0) {
     return `<section class="module-landing">
     <div class="module-hero">
       <h1>Java Intensive Studio</h1>
-      <p>Материалы интенсивов по модулям.</p>
+      <p class="module-hero-lead">Материалы интенсивов по модулям.</p>
     </div>
+    <h2 class="module-section-title">Учебные модули</h2>
     <div class="module-grid">${cards}</div>
   </section>`;
   }
 
-  const interviewAvailable = interviewModule?.isAvailable !== false;
-  const interviewCardClass = interviewAvailable ? 'module-card module-card--interview' : 'module-card locked';
-  const interviewAction = interviewAvailable ? 'data-action="open-module"' : '';
-  const interviewLock =
-    !interviewAvailable && interviewModule?.lockedReason
-      ? `<p class="module-lock">${interviewModule.lockedReason}</p>`
-      : '';
+  const interviewCards = interviewSlots
+    .map(({ moduleItem, index }) => {
+      const interviewAvailable = moduleItem.isAvailable !== false;
+      const interviewCardClass = interviewAvailable ? 'module-card module-card--interview' : 'module-card locked';
+      const interviewAction = interviewAvailable ? 'data-action="open-module"' : '';
+      const interviewLock =
+        !interviewAvailable && moduleItem.lockedReason ? `<p class="module-lock">${moduleItem.lockedReason}</p>` : '';
+      const kicker = moduleItem.interviewSectionKicker ?? 'Интервью';
+      const interviewMeta =
+        moduleItem.topics.length > 0
+          ? `<p class="module-meta"><span class="module-meta-dot" aria-hidden="true"></span>Тем: ${moduleItem.topics.length}</p>`
+          : '';
+      return `<button type="button" class="${interviewCardClass}" ${interviewAction} data-module-index="${index}" data-module-id="${moduleItem.id}">
+        <p class="module-kicker">${kicker}</p>
+        <h2>${moduleItem.title}</h2>
+        <p class="module-description">${moduleItem.summary ?? `Тем: ${moduleItem.topics.length}.`}</p>
+        ${interviewMeta}
+        ${interviewLock}
+      </button>`;
+    })
+    .join('');
 
   const interviewBlock = `<div class="interview-landing-block">
     <h2 class="interview-landing-title">Интервью</h2>
-    <p class="interview-landing-intro">Те же вкладки и структура, что у тем модулей: кратко, вопрос — ответ, схемы.</p>
+    <p class="interview-landing-intro">Та же структура карточек, что у учебных модулей: краткое объяснение, вопросы и ответы для собеседования, примеры и ссылки.</p>
     <div class="module-grid module-grid--interview">
-      <button type="button" class="${interviewCardClass}" ${interviewAction} data-module-index="${interviewIndex}">
-        <p class="module-kicker">Микросервисы и эксплуатация</p>
-        <h2>${interviewModule.title}</h2>
-        <p class="module-description">${interviewModule.summary ?? `Тем: ${interviewModule.topics.length}.`}</p>
-        ${interviewLock}
-      </button>
+      ${interviewCards}
     </div>
   </div>`;
 
   return `<section class="module-landing">
     <div class="module-hero">
       <h1>Java Intensive Studio</h1>
-      <p>Материалы интенсивов по модулям.</p>
+      <p class="module-hero-lead">Материалы интенсивов по модулям.</p>
     </div>
+    <h2 class="module-section-title">Учебные модули</h2>
     <div class="module-grid">${cards}</div>
     ${interviewBlock}
   </section>`;
@@ -169,6 +188,13 @@ function highlightTerms(text: string): string {
     'API Gateway',
     'happens-before',
     'volatile',
+    'Spring',
+    'Spring Boot',
+    'IoC',
+    'DI',
+    'ACID',
+    'NoSQL',
+    'SQL',
   ];
   return terms
     .sort((left, right) => right.length - left.length)
@@ -330,7 +356,7 @@ function renderTopicPage(topic: TopicContent): string {
         <ul class="bullet-list">${walkthrough}</ul>`
     : '';
 
-  const isInterviewPack = topic.id.startsWith('int-ms-');
+  const isInterviewPack = topic.id.startsWith('int-ms-') || topic.id.startsWith('int-stack-');
   const hasGlossary = Boolean(topic.glossary && topic.glossary.length > 0);
   const glossaryDl =
     hasGlossary && topic.glossary
@@ -438,7 +464,7 @@ function render(): void {
         <header class="content-header">
           <h2>${topic.title}</h2>
           ${
-            topic.id.startsWith('int-ms-')
+            topic.id.startsWith('int-ms-') || topic.id.startsWith('int-stack-')
               ? `<p class="content-header-hint">${
                   topic.glossary && topic.glossary.length > 0
                     ? 'Первый блок под заголовком темы — <strong>Словарь терминов</strong> (расшифровки из вопроса). Ниже — вопросы для беседы (карточка может «прилипать» при прокрутке).'
