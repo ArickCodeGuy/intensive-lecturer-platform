@@ -7,9 +7,11 @@
     "dev": "node ./node_modules/vite/bin/vite.js",
     "build": "tsc && node ./node_modules/vite/bin/vite.js build",
     "preview": "node ./node_modules/vite/bin/vite.js preview",
-    "share:prepare": "npm run build && powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/prepare-share.ps1"
+    "share:prepare": "npm run build && powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/prepare-share.ps1",
+    "deploy": "tsc && vite build && gh-pages -d dist"
   },
   "devDependencies": {
+    "gh-pages": "^6.3.0",
     "typescript": "~6.0.2",
     "vite": "^8.0.4"
   }
