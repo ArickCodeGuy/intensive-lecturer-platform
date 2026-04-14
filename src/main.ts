@@ -22,11 +22,18 @@ function isInterviewLandingModule(moduleItem: (typeof modules)[number]): boolean
   return moduleItem.id.startsWith('interview-');
 }
 
+function isCvLandingModule(moduleItem: (typeof modules)[number]): boolean {
+  return moduleItem.id === 'cv-interview';
+}
+
 function renderModuleLanding(): string {
   const interviewSlots = modules
     .map((moduleItem, index) => ({ moduleItem, index }))
     .filter(({ moduleItem }) => isInterviewLandingModule(moduleItem));
-  const coreModules = modules.filter((m) => !isInterviewLandingModule(m));
+  const cvSlots = modules
+    .map((moduleItem, index) => ({ moduleItem, index }))
+    .filter(({ moduleItem }) => isCvLandingModule(moduleItem));
+  const coreModules = modules.filter((m) => !isInterviewLandingModule(m) && !isCvLandingModule(m));
 
   const cards = coreModules
     .map((moduleItem, displayIndex) => {
@@ -90,6 +97,37 @@ function renderModuleLanding(): string {
     </div>
   </div>`;
 
+  const cvCards = cvSlots
+    .map(({ moduleItem, index }) => {
+      const isAvailable = moduleItem.isAvailable !== false;
+      const cardClass = isAvailable ? 'module-card module-card--cv' : 'module-card locked';
+      const actionAttr = isAvailable ? 'data-action="open-module"' : '';
+      const lockText = !isAvailable && moduleItem.lockedReason ? `<p class="module-lock">${moduleItem.lockedReason}</p>` : '';
+      const meta =
+        moduleItem.topics.length > 0
+          ? `<p class="module-meta"><span class="module-meta-dot" aria-hidden="true"></span>Тем: ${moduleItem.topics.length}</p>`
+          : '';
+      return `<button type="button" class="${cardClass}" ${actionAttr} data-module-index="${index}" data-module-id="${moduleItem.id}">
+        <p class="module-kicker">CV интервью</p>
+        <h2>${moduleItem.title}</h2>
+        <p class="module-description">${moduleItem.summary ?? ''}</p>
+        ${meta}
+        ${lockText}
+      </button>`;
+    })
+    .join('');
+
+  const cvBlock =
+    cvSlots.length > 0
+      ? `<div class="cv-landing-block">
+    <h2 class="cv-landing-title">CV</h2>
+    <p class="cv-landing-intro">Интервью по опыту кандидата: проекты, процессы, команда и софт-скиллы. Для каждого вопроса — ориентиры middle/senior и отметка результата.</p>
+    <div class="module-grid module-grid--cv">
+      ${cvCards}
+    </div>
+  </div>`
+      : '';
+
   return `<section class="module-landing">
     <div class="module-hero">
       <h1>Java Intensive Studio</h1>
@@ -98,11 +136,52 @@ function renderModuleLanding(): string {
     <h2 class="module-section-title">Учебные модули</h2>
     <div class="module-grid">${cards}</div>
     ${interviewBlock}
+    ${cvBlock}
   </section>`;
 }
 
 function renderTopicList(): string {
   const moduleData = modules[state.activeModuleIndex];
+  if (moduleData.id === 'cv-interview') {
+    const groupLabels: Record<string, string> = {
+      'cvb-': 'CV Basics',
+      'prj-': 'Проект',
+      'proc-': 'Процессы',
+      'team-': 'Работа в команде',
+      'task-': 'Жизненный цикл задачи',
+      'you-': 'Ты и работа',
+      'gen-': 'Общее',
+    };
+
+    const groups = Object.keys(groupLabels).map((prefix) => ({
+      prefix,
+      label: groupLabels[prefix],
+      items: moduleData.topics
+        .map((topic, index) => ({ topic, index }))
+        .filter(({ topic }) => topic.id.startsWith(prefix)),
+    }));
+
+    const renderedGroups = groups
+      .filter((g) => g.items.length > 0)
+      .map((group) => {
+        const items = group.items
+          .map(({ topic, index }) => {
+            const selectedClass = index === state.activeTopicIndex ? 'topic-item selected' : 'topic-item';
+            return `<button class="${selectedClass}" data-action="select-topic" data-topic-index="${index}">
+              <span class="topic-title">${topic.title}</span>
+            </button>`;
+          })
+          .join('');
+        return `<div class="topic-group">
+          <div class="topic-group-title">${group.label}</div>
+          <div class="topic-group-items">${items}</div>
+        </div>`;
+      })
+      .join('');
+
+    return renderedGroups;
+  }
+
   return moduleData.topics
     .map((topic, index) => {
       const selectedClass = index === state.activeTopicIndex ? 'topic-item selected' : 'topic-item';
@@ -299,32 +378,115 @@ function normalizeViewText(value: string): string {
   return value.toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
+function normalizeCvAnswer(text: string): string {
+  let normalized = text.trim();
+
+  // Важно: \b в JS не работает как Unicode-word-boundary для кириллицы,
+  // поэтому используем Unicode property escapes по границам букв.
+  const replaceWord = (input: string, word: string, replacement: string): string => {
+    const re = new RegExp(`(^|[^\\p{L}])(${word})(?=$|[^\\p{L}])`, 'giu');
+    return input.replace(re, (_, prefix: string) => `${prefix}${replacement}`);
+  };
+
+  const replaceWords = (input: string, map: Record<string, string>): string => {
+    return Object.entries(map).reduce((acc, [word, replacement]) => replaceWord(acc, word, replacement), input);
+  };
+
+  normalized = replaceWords(normalized, {
+    // Местоимения 1 лица
+    я: 'кандидат',
+    мне: 'кандидату',
+    мной: 'кандидатом',
+    мною: 'кандидатом',
+    мой: 'кандидата',
+    моя: 'кандидата',
+    моё: 'кандидата',
+    мои: 'кандидата',
+    моих: 'кандидата',
+    моему: 'кандидату',
+    моей: 'кандидата',
+
+    // Типовые глаголы 1 лица (встречаются как “Описываю…”, “Показываю…” и т.д.)
+    привожу: 'кандидат приводит',
+    перечисляю: 'кандидат перечисляет',
+    называю: 'кандидат называет',
+    объясняю: 'кандидат объясняет',
+    рассказываю: 'кандидат рассказывает',
+    говорю: 'кандидат говорит',
+    описываю: 'кандидат описывает',
+    показываю: 'кандидат показывает',
+    делю: 'кандидат делит',
+    упоминаю: 'кандидат упоминает',
+    выбираю: 'кандидат выбирает',
+    уточняю: 'кандидат уточняет',
+    сравниваю: 'кандидат сравнивает',
+  });
+
+  normalized = normalized.replace(/что делал лично/giu, 'что делал кандидат');
+  normalized = normalized.replace(/что сделал лично/giu, 'что сделал кандидат');
+
+  // После точки/воскл/вопр приводим "кандидат" к заглавной букве (чтобы не было ". кандидат ...")
+  normalized = normalized.replace(/([.!?]\s+)кандидат/giu, '$1Кандидат');
+
+  // Косметика: если строка начинается со строчного "кандидат" — делаем заглавную букву
+  normalized = normalized.replace(/^кандидат\b/, 'Кандидат');
+  return normalized;
+}
+
 function renderTopicPage(topic: TopicContent): string {
-  const lines = topic.explainBrief.map((line) => `<li>${highlightTerms(line)}</li>`).join('');
-  const keyPoints = topic.keyPoints.map((line) => `<li>${renderHighlightedLine(line)}</li>`).join('');
-  const commonMistakes = topic.commonMistakes.map((line) => `<li>${renderMistakeLine(topic, line)}</li>`).join('');
+  const moduleData = modules[state.activeModuleIndex];
+  const isCvPack = moduleData?.id === 'cv-interview' || topic.id.startsWith('cvb-') || topic.id.startsWith('prj-') || topic.id.startsWith('proc-') ||
+    topic.id.startsWith('team-') || topic.id.startsWith('task-') || topic.id.startsWith('you-') || topic.id.startsWith('gen-');
+
+  const cvText = (value: string): string => (isCvPack ? normalizeCvAnswer(value) : value);
+
+  const lines = topic.explainBrief.map((line) => `<li>${highlightTerms(cvText(line))}</li>`).join('');
+  const keyPoints = topic.keyPoints.map((line) => `<li>${renderHighlightedLine(cvText(line))}</li>`).join('');
+  const commonMistakes = topic.commonMistakes.map((line) => `<li>${renderMistakeLine(topic, cvText(line))}</li>`).join('');
+
   const interviewWithAnswers = topic.interviewFocus
-    .map(
-      (item) =>
-        `<li class="qa-item"><span class="qa-question">${highlightTerms(item.question)}</span><span class="qa-answer">${highlightTerms(item.expectedAnswer)}</span></li>`,
-    )
+    .map((item) => {
+      if (!isCvPack || !item.expectedAnswerByLevel) {
+        const expectedAnswer = isCvPack ? cvText(item.expectedAnswer) : item.expectedAnswer;
+        return `<li class="qa-item"><span class="qa-question">${highlightTerms(item.question)}</span><span class="qa-answer">${highlightTerms(expectedAnswer)}</span></li>`;
+      }
+
+      const middle = normalizeCvAnswer(item.expectedAnswerByLevel.middle);
+      const senior = normalizeCvAnswer(item.expectedAnswerByLevel.senior);
+
+      return `<li class="qa-item qa-item--cv">
+        <div class="qa-cv-head">
+          <span class="qa-question">${highlightTerms(item.question)}</span>
+        </div>
+        <div class="qa-cv-answers">
+          <div class="qa-cv-answer">
+            <div class="qa-cv-label">Middle</div>
+            <div class="qa-answer">${highlightTerms(middle)}</div>
+          </div>
+          <div class="qa-cv-answer">
+            <div class="qa-cv-label">Senior</div>
+            <div class="qa-answer">${highlightTerms(senior)}</div>
+          </div>
+        </div>
+      </li>`;
+    })
     .join('');
   const quickAnswerSection =
     normalizeViewText(topic.simpleDefinition).includes(normalizeViewText(topic.quickAnswer))
       ? ''
       : `<section class="section-block section-answer">
       <h3>Короткий ответ</h3>
-      <p>${highlightTerms(topic.quickAnswer)}</p>
+      <p>${highlightTerms(cvText(topic.quickAnswer))}</p>
     </section>`;
 
-  const walkthrough = topic.codeExample.walkthrough.map((line) => `<li>${line}</li>`).join('');
+  const walkthrough = topic.codeExample.walkthrough.map((line) => `<li>${cvText(line)}</li>`).join('');
   const antiPatternBlock = topic.codeExample.antiPatternSnippet
     ? `<h3>Антипример (как делать не стоит)</h3>
     <pre><code>${topic.codeExample.antiPatternSnippet}</code></pre>
     <article class="pitfall-card"><strong>Почему плохо:</strong> ${topic.codeExample.antiPatternNote ?? topic.codeExample.commonPitfall}</article>`
     : '';
   const productionNote = topic.codeExample.productionNote
-    ? `<article class="section-block section-success"><h3>Production заметка</h3><p>${topic.codeExample.productionNote}</p></article>`
+    ? `<article class="section-block section-success"><h3>Production заметка</h3><p>${cvText(topic.codeExample.productionNote)}</p></article>`
     : '';
 
   const explainSection = lines
@@ -356,7 +518,16 @@ function renderTopicPage(topic: TopicContent): string {
         <ul class="bullet-list">${walkthrough}</ul>`
     : '';
 
-  const isInterviewPack = topic.id.startsWith('int-ms-') || topic.id.startsWith('int-stack-');
+  const isInterviewPack =
+    topic.id.startsWith('int-ms-') ||
+    topic.id.startsWith('int-stack-') ||
+    topic.id.startsWith('cvb-') ||
+    topic.id.startsWith('prj-') ||
+    topic.id.startsWith('proc-') ||
+    topic.id.startsWith('team-') ||
+    topic.id.startsWith('task-') ||
+    topic.id.startsWith('you-') ||
+    topic.id.startsWith('gen-');
   const hasGlossary = Boolean(topic.glossary && topic.glossary.length > 0);
   const glossaryDl =
     hasGlossary && topic.glossary
@@ -421,7 +592,7 @@ function renderTopicPage(topic: TopicContent): string {
       <div class="content-card">
         <section class="section-block section-definition">
           <h3>Простое определение</h3>
-          <p>${highlightTerms(topic.simpleDefinition)}</p>
+          <p>${highlightTerms(cvText(topic.simpleDefinition))}</p>
         </section>
         ${quickAnswerSection}
         ${explainSection}
@@ -435,7 +606,7 @@ function renderTopicPage(topic: TopicContent): string {
       <h3 class="topic-section-title">Код и пояснения</h3>
       <article class="content-card">
         <h3>${topic.codeExample.title}</h3>
-        <pre><code>${topic.codeExample.snippet}</code></pre>
+        <pre><code>${topic.codeExample.snippet.replace(/\\n/g, '\n')}</code></pre>
         ${walkthroughSection}
         ${productionNote}
         ${antiPatternBlock}
@@ -464,7 +635,9 @@ function render(): void {
         <header class="content-header">
           <h2>${topic.title}</h2>
           ${
-            topic.id.startsWith('int-ms-') || topic.id.startsWith('int-stack-')
+            topic.id.startsWith('int-ms-') ||
+            topic.id.startsWith('int-stack-') ||
+            moduleData.id === 'cv-interview'
               ? `<p class="content-header-hint">${
                   topic.glossary && topic.glossary.length > 0
                     ? 'Первый блок под заголовком темы — <strong>Словарь терминов</strong> (расшифровки из вопроса). Ниже — вопросы для беседы (карточка может «прилипать» при прокрутке).'

@@ -20,6 +20,14 @@ export interface TopicResourceLink {
 export interface TopicInterviewQuestion {
   question: string;
   expectedAnswer: string;
+  /**
+   * Для CV-интервью: один и тот же вопрос, но разные ориентиры ответа по уровню.
+   * Если поле задано, UI может показывать ответ по выбранному уровню.
+   */
+  expectedAnswerByLevel?: {
+    middle: string;
+    senior: string;
+  };
 }
 
 /** Краткие расшифровки терминов (англ. аббревиатуры, имена продуктов) для лектора. */

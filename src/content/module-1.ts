@@ -461,6 +461,12 @@ export function topic(input: LegacyTopicInput): Topic {
   const clarifiedInterviewFocus = input.interviewFocus.map((item) => ({
     question: clarifyTerminology(item.question),
     expectedAnswer: clarifyTerminology(item.expectedAnswer),
+    expectedAnswerByLevel: item.expectedAnswerByLevel
+      ? {
+          middle: clarifyTerminology(item.expectedAnswerByLevel.middle),
+          senior: clarifyTerminology(item.expectedAnswerByLevel.senior),
+        }
+      : undefined,
   }));
 
   const selfCheck: string[] = [];
