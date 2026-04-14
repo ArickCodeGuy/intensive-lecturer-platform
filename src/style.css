@@ -89,6 +89,8 @@ p {
 }
 
 .cv-landing-block {
+  /* Блок CV на главной скрыт; разметка и модуль не удалены — снова показать: убрать display:none */
+  display: none;
   margin-top: 18px;
   padding: 22px 20px 8px;
   border: 1px solid #cfe7dc;
