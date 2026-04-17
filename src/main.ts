@@ -196,12 +196,22 @@ function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function getTermRegex(term: string): RegExp {
   const escaped = escapeRegExp(term);
   return new RegExp(`(^|[^A-Za-zА-Яа-яЁё0-9_])(${escaped})(?=$|[^A-Za-zА-Яа-яЁё0-9_])`, 'gi');
 }
 
 function highlightTerms(text: string): string {
+  const safeText = escapeHtml(text);
   const terms = [
     'JVM',
     'JRE',
@@ -282,7 +292,7 @@ function highlightTerms(text: string): string {
       return acc.replace(regex, (_, prefix: string, matchedTerm: string) => {
         return `${prefix}<span class="term-highlight">${matchedTerm}</span>`;
       });
-    }, text);
+    }, safeText);
 }
 
 function renderHighlightedLine(line: string): string {
@@ -479,14 +489,14 @@ function renderTopicPage(topic: TopicContent): string {
       <p>${highlightTerms(cvText(topic.quickAnswer))}</p>
     </section>`;
 
-  const walkthrough = topic.codeExample.walkthrough.map((line) => `<li>${cvText(line)}</li>`).join('');
+  const walkthrough = topic.codeExample.walkthrough.map((line) => `<li>${highlightTerms(cvText(line))}</li>`).join('');
   const antiPatternBlock = topic.codeExample.antiPatternSnippet
     ? `<h3>Антипример (как делать не стоит)</h3>
-    <pre><code>${topic.codeExample.antiPatternSnippet}</code></pre>
+    <pre><code>${escapeHtml(topic.codeExample.antiPatternSnippet)}</code></pre>
     <article class="pitfall-card"><strong>Почему плохо:</strong> ${topic.codeExample.antiPatternNote ?? topic.codeExample.commonPitfall}</article>`
     : '';
   const productionNote = topic.codeExample.productionNote
-    ? `<article class="section-block section-success"><h3>Production заметка</h3><p>${cvText(topic.codeExample.productionNote)}</p></article>`
+    ? `<article class="section-block section-success"><h3>Production заметка</h3><p>${highlightTerms(cvText(topic.codeExample.productionNote))}</p></article>`
     : '';
 
   const explainSection = lines
@@ -606,7 +616,7 @@ function renderTopicPage(topic: TopicContent): string {
       <h3 class="topic-section-title">Код и пояснения</h3>
       <article class="content-card">
         <h3>${topic.codeExample.title}</h3>
-        <pre><code>${topic.codeExample.snippet.replace(/\\n/g, '\n')}</code></pre>
+        <pre><code>${escapeHtml(topic.codeExample.snippet.replace(/\\n/g, '\n'))}</code></pre>
         ${walkthroughSection}
         ${productionNote}
         ${antiPatternBlock}

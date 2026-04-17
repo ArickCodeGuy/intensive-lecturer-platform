@@ -1,19 +1,9 @@
 import { module1 } from './module-1';
+import { module2 } from './module-2';
 import { moduleInterviewMs } from './module-interview-ms';
 import { moduleInterviewStack } from './module-interview-stack';
 import { moduleCvInterview } from './module-cv-interview';
 import type { LectureModule } from './schema';
-
-const module2: LectureModule = {
-  id: 'module-2',
-  title: 'Module 2: Exceptions, I/O, Algorithms, Collections',
-  targetDurationMinutes: 60,
-  audienceLevel: 'Java interns',
-  topics: [],
-  isAvailable: false,
-  lockedReason: 'Недоступно',
-  summary: 'Исключения, потоки ввода-вывода, сериализация, Big O, сортировки, generics и коллекции.',
-};
 
 const module3: LectureModule = {
   id: 'module-3',
@@ -50,6 +40,9 @@ const module5: LectureModule = {
 
 module1.isAvailable = true;
 module1.summary = 'Core Java: JVM, память, ООП, модификаторы, String, equals/hashCode и базовые собес-вопросы.';
+
+module2.isAvailable = true;
+module2.lockedReason = undefined;
 
 export const modules: LectureModule[] = [
   module1,

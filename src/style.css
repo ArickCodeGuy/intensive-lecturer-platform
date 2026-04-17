@@ -240,11 +240,14 @@ p {
   gap: 8px;
   color: #5d6d8c;
   font-size: 13px;
+  line-height: 1.2;
   margin-top: auto;
   font-weight: 500;
 }
 
 .module-meta-dot {
+  display: inline-block;
+  vertical-align: middle;
   width: 6px;
   height: 6px;
   border-radius: 50%;
