@@ -8,7 +8,8 @@
     "build": "tsc && node ./node_modules/vite/bin/vite.js build",
     "preview": "node ./node_modules/vite/bin/vite.js preview",
     "share:prepare": "npm run build && powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/prepare-share.ps1",
-    "deploy": "tsc && vite build && gh-pages -d dist"
+    "deploy": "tsc && vite build && gh-pages -d dist",
+    "gh-pages-publish": "gh-pages -d dist"
   },
   "devDependencies": {
     "gh-pages": "^6.3.0",
