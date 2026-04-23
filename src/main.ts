@@ -531,6 +531,7 @@ function renderTopicPage(topic: TopicContent): string {
   const isInterviewPack =
     topic.id.startsWith('int-ms-') ||
     topic.id.startsWith('int-stack-') ||
+    topic.id.startsWith('int-3-') ||
     topic.id.startsWith('cvb-') ||
     topic.id.startsWith('prj-') ||
     topic.id.startsWith('proc-') ||
@@ -647,6 +648,7 @@ function render(): void {
           ${
             topic.id.startsWith('int-ms-') ||
             topic.id.startsWith('int-stack-') ||
+            topic.id.startsWith('int-3-') ||
             moduleData.id === 'cv-interview'
               ? `<p class="content-header-hint">${
                   topic.glossary && topic.glossary.length > 0
