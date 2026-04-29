@@ -1,4 +1,4 @@
-name: Sync fork and build
+name: Publish on github pages
 
 on:
   push:
