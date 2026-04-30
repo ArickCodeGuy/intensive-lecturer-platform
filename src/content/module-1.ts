@@ -5,6 +5,8 @@ type LegacyTopicInput = {
   title: string;
   quickAnswer: string;
   explainBrief: string[];
+  /** Последовательность вопросов для ведения темы от простого к сложному. */
+  questionPlan?: Topic['questionPlan'];
   interviewFocus: Topic['interviewFocus'];
   codeExample: Topic['codeExample'];
   practiceHint?: {
@@ -469,7 +471,11 @@ export function topic(input: LegacyTopicInput): Topic {
       : undefined,
   }));
 
-  const selfCheck: string[] = [];
+  const questionPlan = input.questionPlan?.map((item) => ({
+    question: clarifyTerminology(item.question),
+    answerHint: clarifyTerminology(item.answerHint),
+  }));
+  const selfCheck = uniqueLines((questionPlan ?? []).map((item) => item.question));
 
   const interviewTraps = uniqueLines([
     'Отвечают определением из учебника без примера из практики.',
@@ -499,6 +505,7 @@ export function topic(input: LegacyTopicInput): Topic {
     simpleDefinition,
     quickAnswer: clarifiedQuickAnswer,
     explainBrief: clarifiedExplainBrief,
+    questionPlan,
     keyPoints,
     commonMistakes: finalCommonMistakes,
     selfCheck,

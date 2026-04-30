@@ -1179,9 +1179,15 @@ class User {
       quickAnswer:
         'Лямбда — короткая запись реализации функционального интерфейса (интерфейса с одним абстрактным методом). Она улучшает читаемость и позволяет писать декларативный код со Stream API.',
       explainBrief: [
+        'Лямбда — короткая реализация функционального интерфейса.',
+        'Функциональный интерфейс: один абстрактный метод.',
         'Функциональный интерфейс помечают `@FunctionalInterface` (не обязательно, но полезно).',
-        'Типовые функциональные интерфейсы: `Predicate`, `Function`, `Supplier`, `Consumer`.',
-        'Лямбда может захватывать effectively-final переменные из внешней области видимости.',
+        'База: `Predicate`, `Function`, `Consumer`, `Supplier`.',
+        '`Predicate<T>`: принимает `T`, возвращает `boolean`; нужен для условий/фильтрации (`filter`).',
+        '`Function<T, R>`: принимает `T`, возвращает `R`; нужен для преобразования данных (`map`).',
+        '`Consumer<T>`: принимает `T`, ничего не возвращает; нужен для действия/побочного эффекта (`forEach`).',
+        '`Supplier<T>`: ничего не принимает, возвращает `T`; нужен как источник/генератор значений.',
+        'Лямбда может захватывать effectively-final переменные из внешней области видимости: переменная после инициализации не должна меняться.',
         'Method reference (`Class::method`) — синтаксический сахар для лямбды.',
         'Важно понимать, что лямбда — это объект, и чрезмерное использование может влиять на аллокации (в зависимости от контекста).',
         'Читаемость важнее «умности»: сложные лямбды лучше вынести в именованные методы.',
@@ -1228,6 +1234,14 @@ interface SimplePredicate<T> {
       },
       glossary: [
         {
+          term: 'Лямбда',
+          meaning: 'Короткая реализация функционального интерфейса.',
+        },
+        {
+          term: 'Функциональный интерфейс',
+          meaning: 'Интерфейс с одним абстрактным методом.',
+        },
+        {
           term: '@FunctionalInterface',
           meaning:
             'Аннотация, подтверждающая, что интерфейс функциональный (у него ровно один абстрактный метод, поэтому его можно реализовать лямбдой или ссылкой на метод).',
@@ -1236,6 +1250,26 @@ interface SimplePredicate<T> {
           term: 'Predicate',
           meaning:
             'Функция-условие: принимает объект и возвращает `true/false`. Пример: `s -> s != null` или `n -> n > 0`.',
+        },
+        {
+          term: 'Function',
+          meaning:
+            'Функция-преобразование: принимает значение одного типа и возвращает значение другого типа. В stream чаще всего используется в `map`.',
+        },
+        {
+          term: 'Consumer',
+          meaning:
+            'Функция-действие без возвращаемого результата. Используется, когда нужно “что-то сделать” с элементом (например, `forEach`).',
+        },
+        {
+          term: 'Supplier',
+          meaning:
+            'Функция-источник: ничего не принимает и возвращает значение. Используется для генерации/поставки данных.',
+        },
+        {
+          term: 'effectively final',
+          meaning:
+            'Локальная переменная, которая после инициализации не изменяется. Только такие переменные можно захватывать в лямбде.',
         },
       ],
       estimatedMinutes: 4,
@@ -1247,6 +1281,7 @@ interface SimplePredicate<T> {
       quickAnswer:
         'Stream API помогает обрабатывать коллекции как конвейер операций: `filter`, `map`, `sorted`, `collect`. Важно помнить, что stream ленивый и выполняется только при терминальной операции, а также избегать побочных эффектов.',
       explainBrief: [
+        'Stream опирается на функциональные интерфейсы: `Predicate` (filter), `Function` (map), `Consumer` (forEach), `Supplier` (источник значений).',
         'Промежуточные операции (`map`, `filter`) ленивые и возвращают новый stream.',
         'Терминальные операции (`collect`, `count`, `forEach`) запускают выполнение.',
         'Stream не хранит данные, он описывает pipeline преобразований.',
@@ -1290,6 +1325,42 @@ public class StreamDemo {
       },
       glossary: [
         {
+          term: 'Stream API',
+          meaning:
+            'Подход к обработке коллекций как конвейера шагов (`filter -> map -> collect`), где данные не меняются “на месте”, а проходят через цепочку операций.',
+        },
+        {
+          term: 'map',
+          meaning:
+            'Преобразование каждого элемента в новый вид. Например, из `User` получить `user.getName()`. Метод `map` принимает `Function<T, R>`.',
+        },
+        {
+          term: 'filter',
+          meaning:
+            'Отбор элементов по условию (`true/false`). Всё, что не прошло условие, из потока убирается. Метод `filter` принимает `Predicate<T>`.',
+        },
+        {
+          term: 'reduce',
+          meaning:
+            'Сведение набора элементов к одному результату (например, сумма, произведение, объединение). В `reduce` обычно передают `BinaryOperator<T>` или аккумулятор типа `BiFunction`.',
+        },
+        {
+          term: 'Predicate',
+          meaning: 'Функция-условие для `filter`: принимает элемент и возвращает `true/false`.',
+        },
+        {
+          term: 'Function',
+          meaning: 'Функция-преобразование для `map`: принимает `T`, возвращает `R`.',
+        },
+        {
+          term: 'Consumer',
+          meaning: 'Функция-действие для `forEach`: принимает элемент и ничего не возвращает.',
+        },
+        {
+          term: 'Supplier',
+          meaning: 'Функция-источник значений: ничего не принимает и возвращает результат.',
+        },
+        {
           term: 'Intermediate operation',
           meaning:
             'Промежуточная операция stream (`map`, `filter`, `sorted`). «Ленивая» = не выполняется сразу: она лишь собирает цепочку действий. Реальная обработка начинается только при терминальной операции, поэтому порядок операций важен (обычно `filter` раньше `map`), и возможны оптимизации (например, `findFirst` может остановиться раньше).',
@@ -1301,6 +1372,149 @@ public class StreamDemo {
         },
       ],
       estimatedMinutes: 4,
+    }),
+    topic({
+      id: 'homework-2-students-books',
+      title: 'Домашнее задание 2: эталонная реализация (Student/Book + file I/O + один stream)',
+      quickAnswer:
+        'Эталон: есть `Student` с обязательным `List<Book>`, есть чтение из текстового файла в `List<Student>`, и есть один stream без промежуточных переменных, который закрывает все пункты задания и выводит `Optional` год.',
+      explainBrief: [
+        'Пункт 1: модель данных — `Student` содержит `List<Book>`, у каждого студента минимум 5 книг.',
+        'Пункт 2: данные хранятся в текстовом файле, каждая строка описывает одного студента и набор книг.',
+        'Пункт 3: чтение файла через `Files.lines(...)` и маппинг строк в `Student`.',
+        'Пункт 4: единый stream-пайплайн без промежуточных переменных: печать студентов, flatten книг, сортировка, уникализация, фильтр по году, limit(3), маппинг в год, short-circuit через `findFirst`, вывод через `Optional`.',
+        'Важно для собеса: условие "без промежуточных переменных" не запрещает вызовы методов внутри цепочки, но запрещает выносить шаги в отдельные `List`/`Set` переменные.',
+      ],
+      interviewFocus: [
+        {
+          question: 'Как доказать, что stream действительно один и без промежуточных переменных?',
+          expectedAnswer:
+            'Показать единую цепочку от `students.stream()` до `findFirst()`/`ifPresentOrElse(...)` без промежуточных коллекций и временных переменных между шагами.',
+        },
+        {
+          question: 'Где здесь short-circuit и зачем он нужен?',
+          expectedAnswer:
+            'Short-circuit в `findFirst()`: как только найден первый год после всех фильтров/ограничений, обработка останавливается и не проходит весь поток.',
+        },
+      ],
+      codeExample: {
+        title: 'Полный эталон ДЗ-2 с закрытием всех пунктов',
+        language: 'java',
+        snippet: `import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+public class Homework2Solution {
+    public static void main(String[] args) throws IOException {
+        List<Student> students = Files.lines(Path.of("students-books.txt"), StandardCharsets.UTF_8)
+            .filter(line -> !line.isBlank())
+            .map(Homework2Solution::parseStudent)
+            .collect(Collectors.toList());
+
+        students.stream()
+            .peek(System.out::println)
+            .map(Student::getBooks)
+            .flatMap(List::stream)
+            .sorted(Comparator.comparingInt(Book::getPages).thenComparing(Book::getTitle))
+            .distinct()
+            .filter(book -> book.getYear() > 2000)
+            .limit(3)
+            .map(Book::getYear)
+            .findFirst()
+            .ifPresentOrElse(
+                y -> System.out.println("Год выпуска найденной книги: " + y),
+                () -> System.out.println("Такая книга отсутствует")
+            );
+    }
+
+    private static Student parseStudent(String line) {
+        String[] parts = line.split(";");
+        String studentName = parts[0].trim();
+        List<Book> books = new ArrayList<>();
+        for (int i = 1; i < parts.length; i++) {
+            String[] bookParts = parts[i].split("\\\\|");
+            books.add(new Book(bookParts[0].trim(), Integer.parseInt(bookParts[1].trim()), Integer.parseInt(bookParts[2].trim())));
+        }
+        if (books.size() < 5) {
+            throw new IllegalArgumentException("У студента должно быть минимум 5 книг: " + studentName);
+        }
+        return new Student(studentName, books);
+    }
+}
+
+class Student {
+    private final String name;
+    private final List<Book> books;
+
+    Student(String name, List<Book> books) {
+        this.name = name;
+        this.books = books;
+    }
+
+    List<Book> getBooks() {
+        return books;
+    }
+
+    public String toString() {
+        return "Student{name='" + name + "', books=" + books.size() + "}";
+    }
+}
+
+class Book {
+    private final String title;
+    private final int pages;
+    private final int year;
+
+    Book(String title, int pages, int year) {
+        this.title = title;
+        this.pages = pages;
+        this.year = year;
+    }
+
+    String getTitle() {
+        return title;
+    }
+
+    int getPages() {
+        return pages;
+    }
+
+    int getYear() {
+        return year;
+    }
+
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Book)) return false;
+        Book book = (Book) o;
+        return pages == book.pages && year == book.year && Objects.equals(title, book.title);
+    }
+
+    public int hashCode() {
+        return Objects.hash(title, pages, year);
+    }
+}`,
+        walkthrough: [
+          'Формат файла: `StudentName;title|pages|year;title|pages|year;...`.',
+          'Чтение из файла и маппинг в `List<Student>` закрывают пункты 2 и 3.',
+          'Единая stream-цепочка от студентов до `findFirst().ifPresentOrElse(...)` закрывает все подпункты пункта 4 без промежуточных переменных.',
+        ],
+        commonPitfall: 'Разбить цепочку на несколько временных коллекций и нарушить требование "один stream без промежуточных переменных".',
+        productionNote:
+          'Для учебного задания этот вариант достаточен. Для production обычно добавляют валидацию формата файла и отдельный слой ошибок парсинга.',
+      },
+      glossary: [
+        { term: 'flatMap', meaning: 'Преобразует поток коллекций в единый поток элементов.' },
+        { term: 'Short-circuit', meaning: 'Операция, которая может завершить обработку раньше полного прохода по потоку.' },
+        { term: 'Optional', meaning: 'Контейнер для значения, которое может отсутствовать.' },
+      ],
+      estimatedMinutes: 7,
     }),
   ],
 };

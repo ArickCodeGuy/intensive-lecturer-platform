@@ -14,6 +14,94 @@ const state = {
   activeTopicIndex: 0,
 };
 
+type Interview4ReviewStatus = 'partial' | 'unanswered' | 'notAsked';
+
+type Interview4ReviewMeta = {
+  status: Interview4ReviewStatus;
+  mustAsk?: string;
+};
+
+const interview4ReviewMap: Record<string, Interview4ReviewMeta> = {
+  'int-4-05': {
+    status: 'partial',
+    mustAsk: 'Какие проблемы решаются на разных уровнях изоляции и какие виды блокировок здесь важны.',
+  },
+  'int-4-07': {
+    status: 'partial',
+    mustAsk: 'Что такое партиционирование и когда оно действительно нужно.',
+  },
+  'int-4-08': {
+    status: 'notAsked',
+  },
+  'int-4-09': {
+    status: 'partial',
+    mustAsk: 'Как выявить плохой запрос на проде, а не только локально.',
+  },
+  'int-4-10': {
+    status: 'partial',
+    mustAsk: 'Что такое batching и warm-up и зачем они нужны на практике.',
+  },
+  'int-4-15': {
+    status: 'partial',
+    mustAsk: 'На каком этапе жизненного цикла Spring bean происходит проксирование.',
+  },
+  'int-4-16': {
+    status: 'unanswered',
+    mustAsk: 'Обязательно пройти gRPC: metadata, streaming, версионирование контрактов и где он выигрывает по сравнению с REST.',
+  },
+  'int-4-17': {
+    status: 'unanswered',
+  },
+  'int-4-18': {
+    status: 'unanswered',
+    mustAsk: 'Обязательно пройти REST API design: contract-first и согласование контракта с потребителями.',
+  },
+  'int-4-19': {
+    status: 'notAsked',
+  },
+  'int-4-20': {
+    status: 'partial',
+    mustAsk: 'Основные манифесты Kubernetes: что делает каждый и где он нужен.',
+  },
+  'int-4-21': {
+    status: 'notAsked',
+  },
+  'int-4-22': {
+    status: 'partial',
+    mustAsk: 'Что такое Helm и зачем он нужен поверх Kubernetes.',
+  },
+  'int-4-23': {
+    status: 'partial',
+  },
+  'int-4-24': {
+    status: 'unanswered',
+    mustAsk: 'Обязательно пройти monitoring и observability: метрики, логи, traces и как ими пользоваться на практике.',
+  },
+  'int-4-25': {
+    status: 'partial',
+  },
+  'int-4-26': {
+    status: 'unanswered',
+    mustAsk: 'Как находить транзитивные зависимости в Maven и как их исключать.',
+  },
+};
+
+function getInterview4ReviewMeta(topicId: string): Interview4ReviewMeta | undefined {
+  return interview4ReviewMap[topicId];
+}
+
+function getInterview4ReviewLabel(status: Interview4ReviewStatus): string {
+  if (status === 'partial') {
+    return 'Ответил частично';
+  }
+
+  if (status === 'unanswered') {
+    return 'Не ответил';
+  }
+
+  return 'Не спрошен';
+}
+
 function getCurrentTopic(): TopicContent {
   return modules[state.activeModuleIndex].topics[state.activeTopicIndex];
 }
@@ -185,8 +273,13 @@ function renderTopicList(): string {
   return moduleData.topics
     .map((topic, index) => {
       const selectedClass = index === state.activeTopicIndex ? 'topic-item selected' : 'topic-item';
+      const reviewMeta = moduleData.id === 'interview-4' ? getInterview4ReviewMeta(topic.id) : undefined;
+      const reviewBadge = reviewMeta
+        ? `<span class="topic-review-badge topic-review-badge--${reviewMeta.status}">${getInterview4ReviewLabel(reviewMeta.status)}</span>`
+        : '';
       return `<button class="${selectedClass}" data-action="select-topic" data-topic-index="${index}">
         <span class="topic-title">${topic.title}</span>
+        ${reviewBadge}
       </button>`;
     })
     .join('');
@@ -445,6 +538,7 @@ function normalizeCvAnswer(text: string): string {
 
 function renderTopicPage(topic: TopicContent): string {
   const moduleData = modules[state.activeModuleIndex];
+  const interview4ReviewMeta = moduleData?.id === 'interview-4' ? getInterview4ReviewMeta(topic.id) : undefined;
   const isCvPack = moduleData?.id === 'cv-interview' || topic.id.startsWith('cvb-') || topic.id.startsWith('prj-') || topic.id.startsWith('proc-') ||
     topic.id.startsWith('team-') || topic.id.startsWith('task-') || topic.id.startsWith('you-') || topic.id.startsWith('gen-');
 
@@ -532,6 +626,8 @@ function renderTopicPage(topic: TopicContent): string {
     topic.id.startsWith('int-ms-') ||
     topic.id.startsWith('int-stack-') ||
     topic.id.startsWith('int-3-') ||
+    topic.id.startsWith('int-4-') ||
+    topic.id.startsWith('int-5-') ||
     topic.id.startsWith('cvb-') ||
     topic.id.startsWith('prj-') ||
     topic.id.startsWith('proc-') ||
@@ -561,6 +657,24 @@ function renderTopicPage(topic: TopicContent): string {
     isInterviewPack && hasGlossary
       ? 'content-card content-card--glossary content-card--glossary-prominent'
       : 'content-card content-card--glossary';
+  const questionPlanItems = (topic.questionPlan ?? [])
+    .map(
+      (item) => `<li class="interview-plan-item">
+        <div class="interview-plan-question">${highlightTerms(cvText(item.question))}</div>
+        <div class="interview-plan-answer">${highlightTerms(cvText(item.answerHint))}</div>
+      </li>`,
+    )
+    .join('');
+  const questionPlanSection =
+    isInterviewPack && questionPlanItems
+      ? `<section class="topic-section topic-section--question-plan">
+      <h3 class="topic-section-title">План вопросов</h3>
+      <div class="content-card content-card--question-plan">
+        <p class="interview-plan-lead">Ведите тему по порядку: у каждого вопроса ниже есть короткий ориентир, что считать нормальным ответом.</p>
+        <ol class="interview-plan-list">${questionPlanItems}</ol>
+      </div>
+    </section>`
+      : '';
 
   const interviewPromptLead =
     isInterviewPack && hasGlossary
@@ -594,9 +708,27 @@ function renderTopicPage(topic: TopicContent): string {
       </div>
     </section>`
     : '';
+  const interview4ReviewSection = interview4ReviewMeta
+    ? `<section class="topic-section">
+      <h3 class="topic-section-title">Прошлый прогон</h3>
+      <div class="content-card">
+        <article class="section-block interview-review-card interview-review-card--${interview4ReviewMeta.status}">
+          <p class="interview-review-status">Статус: ${getInterview4ReviewLabel(interview4ReviewMeta.status)}</p>
+          <p class="interview-review-text">На следующем прогоне эту тему нужно обязательно проверить повторно.</p>
+          ${
+            interview4ReviewMeta.mustAsk
+              ? `<p class="interview-review-must-ask"><strong>Обязательно задать:</strong> ${highlightTerms(interview4ReviewMeta.mustAsk)}</p>`
+              : ''
+          }
+        </article>
+      </div>
+    </section>`
+    : '';
 
   return `<article class="topic-page">
     ${glossarySection}
+    ${interview4ReviewSection}
+    ${questionPlanSection}
     ${interviewPromptSection}
     <section class="topic-section">
       <h3 class="topic-section-title">Полный разбор</h3>
@@ -649,6 +781,8 @@ function render(): void {
             topic.id.startsWith('int-ms-') ||
             topic.id.startsWith('int-stack-') ||
             topic.id.startsWith('int-3-') ||
+            topic.id.startsWith('int-4-') ||
+            topic.id.startsWith('int-5-') ||
             moduleData.id === 'cv-interview'
               ? `<p class="content-header-hint">${
                   topic.glossary && topic.glossary.length > 0
