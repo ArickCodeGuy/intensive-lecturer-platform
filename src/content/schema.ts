@@ -36,6 +36,11 @@ export interface TopicGlossaryEntry {
   meaning: string;
 }
 
+export interface TopicQuestionPlanItem {
+  question: string;
+  answerHint: string;
+}
+
 export interface TopicPracticeHint {
   task: string;
   timeboxMinutes: number;
@@ -50,6 +55,7 @@ export interface TopicContent {
   simpleDefinition: string;
   quickAnswer: string;
   explainBrief: string[];
+  questionPlan?: TopicQuestionPlanItem[];
   keyPoints: string[];
   commonMistakes: string[];
   selfCheck: string[];
